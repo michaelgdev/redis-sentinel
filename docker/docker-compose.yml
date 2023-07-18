@@ -1,0 +1,81 @@
+version: '3'
+
+services:
+  redis-0:
+    image: redis:6.0.20-alpine
+    hostname: redis-0
+    container_name: redis-0
+    command: redis-server --port 6379 --requirepass 1234 --appendonly yes
+#    volumes:
+#      - ./redis-0-data:/data
+    ports:
+      - 6379:6379
+    restart: always
+
+  redis-1:
+    image: redis:6.0.20-alpine
+    hostname: redis-1
+    container_name: redis-1
+    command: redis-server --port 6380 --slaveof redis-0 6379 --requirepass 1234 --masterauth 1234
+#    volumes:
+#      - ./redis-1-data:/data
+    ports:
+      - 6380:6379
+    restart: always
+    depends_on:
+      - redis-0
+
+  redis-2:
+    image: redis:6.0.20-alpine
+    hostname: redis-2
+    container_name: redis-2
+    command: redis-server --port 6381 --slaveof redis-0 6379 --requirepass 1234 --masterauth 1234
+#    volumes:
+#      - ./redis-2-data:/data
+    ports:
+      - 6381:6379
+    restart: always
+    depends_on:
+      - redis-0
+
+  redis-sentinel-0:
+    image: redis:6.0.20-alpine
+    container_name: redis-sentinel-0
+    command: redis-sentinel /etc/redis/sentinel.conf --sentinel
+    volumes:
+      - ./sentinel0.conf:/etc/redis/sentinel.conf
+    ports:
+      - 26379:26379
+    restart: always
+    depends_on:
+      - redis-0
+      - redis-1
+      - redis-2
+
+  redis-sentinel-1:
+    image: redis:6.0.20-alpine
+    container_name: redis-sentinel-1
+    command: redis-sentinel /etc/redis/sentinel.conf --sentinel
+    volumes:
+      - ./sentinel1.conf:/etc/redis/sentinel.conf
+    ports:
+      - 26380:26379
+    restart: always
+    depends_on:
+      - redis-0
+      - redis-1
+      - redis-2
+
+  redis-sentinel-2:
+    image: redis:6.0.20-alpine
+    container_name: redis-sentinel-2
+    command: redis-sentinel /etc/redis/sentinel.conf --sentinel
+    volumes:
+      - ./sentinel2.conf:/etc/redis/sentinel.conf
+    ports:
+      - 26381:26379
+    restart: always
+    depends_on:
+      - redis-0
+      - redis-1
+      - redis-2
